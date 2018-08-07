@@ -12,6 +12,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-reflect"
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.24.0-eap13"
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-swing:0.24.0-eap13"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:0.24.0-eap13"
     compile "com.squareup.retrofit2:retrofit:2.4.0"
     compile "com.squareup.retrofit2:converter-jackson:2.4.0"
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+"

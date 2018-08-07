@@ -1,7 +1,8 @@
 @file:Suppress("FunctionName", "unused")
 
-package part1async.slides
+package slides
 
+import kotlinx.coroutines.*
 import kotlin.concurrent.*
 import kotlin.coroutines.*
 
@@ -75,4 +76,10 @@ fun `Real Life Slide`() {
     } catch (e: InterruptedException) {
         // ignore
     }
+}
+
+fun `Async vs Launch Slide`() {
+    class T
+    val job: Job              = launch { TODO() }
+    val deferred: Deferred<T> = async  { TODO() }
 }

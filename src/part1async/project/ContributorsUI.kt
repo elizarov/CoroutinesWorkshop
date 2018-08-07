@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.swing.*
 import java.awt.*
 import java.awt.event.*
+import java.util.concurrent.*
 import java.util.prefs.*
 import javax.swing.*
 import javax.swing.table.*
@@ -21,8 +22,10 @@ enum class Variant {
     BLOCKING_BACKGROUND,
     CALLBACKS,
     COROUTINES,
-    COROUTINES_PROGRESS,
-    COROUTINES_CANCELLABLE
+    PROGRESS,
+    CANCELLABLE,
+    CONCURRENT,
+    FUTURE
 }
 
 private val INSETS = Insets(3, 3, 3, 3)
@@ -82,11 +85,7 @@ class ContributorsUI : JFrame("GitHub Contributors") {
 
     private fun doLoad() {
         clearResults()
-        val req = RequestData(
-            username.text,
-            password.text,
-            org.text
-        )
+        val req = RequestData(username.text, password.text, org.text)
         when (selectedVariant()) {
             Variant.BLOCKING_UI -> { // Blocking UI thread
                 val users = loadContributorsBlocking(req)
@@ -112,19 +111,33 @@ class ContributorsUI : JFrame("GitHub Contributors") {
                     updateResults(users)
                 }
             }
-            Variant.COROUTINES_PROGRESS -> { // Using coroutines showing progress
+            Variant.PROGRESS -> { // Using coroutines showing progress
                 launch(Swing) {
                     loadContributorsProgress(req) { users ->
                         updateResults(users)
                     }
                 }
             }
-            Variant.COROUTINES_CANCELLABLE -> { // Using coroutines with cancellation
+            Variant.CANCELLABLE -> { // Using coroutines with cancellation
                 updateCancelJob(launch(Swing) {
                     loadContributorsProgress(req) { users ->
                         updateResults(users)
                     }
                 })
+            }
+            Variant.CONCURRENT -> {
+                updateCancelJob(launch(Swing) {
+                    updateResults(loadContributorsConcurrent(req))
+                })
+            }
+            Variant.FUTURE -> {
+                val future = loadContributorsConcurrentAsync(req)
+                updateCancelFuture(future)
+                future.thenAccept { users ->
+                    SwingUtilities.invokeLater {
+                        updateResults(users)
+                    }
+                }
             }
         }
     }
@@ -134,6 +147,7 @@ class ContributorsUI : JFrame("GitHub Contributors") {
     }
 
     private fun updateResults(users: List<User>) {
+        log.info("Updating result with ${users.size} rows")
         resultsModel.setDataVector(users.map {
             arrayOf(it.login, it.contributions)
         }.toTypedArray(), COLUMNS)
@@ -154,6 +168,18 @@ class ContributorsUI : JFrame("GitHub Contributors") {
             job.join()
             updateEnabled(true)
             cancel.removeActionListener(listener)
+        }
+    }
+
+    private fun updateCancelFuture(future: CompletableFuture<*>) {
+        updateEnabled(false)
+        val listener = ActionListener { future.cancel(false) }
+        cancel.addActionListener(listener)
+        future.thenAccept {
+            SwingUtilities.invokeLater {
+                updateEnabled(true)
+                cancel.removeActionListener(listener)
+            }
         }
     }
 
