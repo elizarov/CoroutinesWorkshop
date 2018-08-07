@@ -1,4 +1,4 @@
-package part1async.project
+package project
 
 import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.module.kotlin.*

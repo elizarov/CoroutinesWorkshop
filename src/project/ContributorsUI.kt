@@ -1,6 +1,7 @@
-package part1async.project
+package project
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.swing.*
 import java.awt.*
 import java.awt.event.*
@@ -18,14 +19,16 @@ fun main(args: Array<String>) {
 }
 
 enum class Variant {
-    BLOCKING_UI,
-    BLOCKING_BACKGROUND,
-    CALLBACKS,
-    COROUTINES,
-    PROGRESS,
-    CANCELLABLE,
-    CONCURRENT,
-    FUTURE
+    BLOCKING,    // Request1Blocking
+    BACKGROUND,  // Request2Background
+    COROUTINE,   // Request3Coroutine
+    CALLBACKS,   // Request4Callbacks
+    PROGRESS,    // Request5Progress
+    CANCELLABLE, // Request5Progress (too)
+    CONCURRENT,  // Request6Concurrent
+    FUTURE,      // Request7Future
+    GATHER,      // Request8Gather
+    ACTOR        // Request9Actor
 }
 
 private val INSETS = Insets(3, 3, 3, 3)
@@ -87,15 +90,21 @@ class ContributorsUI : JFrame("GitHub Contributors") {
         clearResults()
         val req = RequestData(username.text, password.text, org.text)
         when (selectedVariant()) {
-            Variant.BLOCKING_UI -> { // Blocking UI thread
+            Variant.BLOCKING -> { // Blocking UI thread
                 val users = loadContributorsBlocking(req)
                 updateResults(users)
             }
-            Variant.BLOCKING_BACKGROUND -> { // Blocking a background thread
+            Variant.BACKGROUND -> { // Blocking a background thread
                 loadContributorsBackground(req) { users ->
                     SwingUtilities.invokeLater {
                         updateResults(users)
                     }
+                }
+            }
+            Variant.COROUTINE -> { // Using coroutines
+                launch(Swing) {
+                    val users = loadContributors(req)
+                    updateResults(users)
                 }
             }
             Variant.CALLBACKS -> { // Using callbacks
@@ -103,12 +112,6 @@ class ContributorsUI : JFrame("GitHub Contributors") {
                     SwingUtilities.invokeLater {
                         updateResults(users)
                     }
-                }
-            }
-            Variant.COROUTINES -> { // Using coroutines
-                launch(Swing) {
-                    val users = loadContributors(req)
-                    updateResults(users)
                 }
             }
             Variant.PROGRESS -> { // Using coroutines showing progress
@@ -139,6 +142,24 @@ class ContributorsUI : JFrame("GitHub Contributors") {
                     }
                 }
             }
+            Variant.GATHER -> {
+                updateCancelJob(launch(Swing) {
+                    loadContributorsGather(req) { users ->
+                        updateResults(users)
+                    }
+                })
+            }
+            Variant.ACTOR -> {
+                updateCancelJob(launch(Swing) {
+                    loadContributorsActor(req, uiUpdateActor)
+                })
+            }
+        }
+    }
+
+    private val uiUpdateActor = actor<List<User>>(Swing) {
+        for (users in channel) {
+            updateResults(users)
         }
     }
 
@@ -175,7 +196,7 @@ class ContributorsUI : JFrame("GitHub Contributors") {
         updateEnabled(false)
         val listener = ActionListener { future.cancel(false) }
         cancel.addActionListener(listener)
-        future.thenAccept {
+        future.whenComplete { _, _ ->
             SwingUtilities.invokeLater {
                 updateEnabled(true)
                 cancel.removeActionListener(listener)

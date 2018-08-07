@@ -1,4 +1,4 @@
-package part1async.project
+package project
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
