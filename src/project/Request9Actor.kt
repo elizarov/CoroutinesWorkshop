@@ -8,9 +8,9 @@ fun CoroutineScope.aggregatorActor(
     uiUpdateActor: SendChannel<List<User>>
 ) =
     actor<List<User>> {
-        var contribs = emptyList<User>()
+        var contribs: List<User> = emptyList() // STATE
         for (users in channel) {
-            contribs = (contribs + users).aggregateSlow()
+            // TODO: :UPDATE STATE:
             uiUpdateActor.send(contribs)
         }
     }
@@ -27,13 +27,12 @@ fun CoroutineScope.workerJob(
 ) =
     launch {
         for (req in requests) {
-            val users = req.service.listRepoContributors(req.org, req.repo).await()
-            log.info("${req.repo}: loaded ${users.size} contributors")
+            val users = TODO()
             aggregator.send(users)
         }
     }
 
-suspend fun loadContributorsActor(req: RequestData, uiUpdateActor: SendChannel<List<User>>) = coroutineScope {
+suspend fun loadContributorsActor(req: RequestData, uiUpdateActor: SendChannel<List<User>>) = coroutineScope<Unit> {
     val service = createGitHubService(req.username, req.password)
     log.info("Loading ${req.org} repos")
     val repos = service.listOrgRepos(req.org).await()
@@ -47,6 +46,5 @@ suspend fun loadContributorsActor(req: RequestData, uiUpdateActor: SendChannel<L
         requests.send(WorkerRequest(service, req.org, repo.name))
     }
     requests.close()
-    workers.joinAll()
-    aggregator.close()
+    // TOOD: join workers & complete
 }
