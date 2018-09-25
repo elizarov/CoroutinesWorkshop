@@ -45,8 +45,8 @@ class ContributorsUI : JFrame("GitHub Contributors") {
     private val resultsModel = DefaultTableModel(COLUMNS, 0)
     private val results = JTable(resultsModel)
 
-    private val animation = JProgressBar(0, 100)
-    private var animationDirection = 1
+    private val icon = ImageIcon(javaClass.classLoader.getResource("ajax-loader.gif"))
+    private val animation = JLabel("Event thread is active", icon, SwingConstants.CENTER)
 
     init {
         // Create UI
@@ -78,10 +78,6 @@ class ContributorsUI : JFrame("GitHub Contributors") {
         })
         // Load initial preferences
         loadPrefs()
-        // Start animation to show how UI is responding
-        Timer(20) {
-            updateAnimation()
-        }.start()
     }
 
     private fun selectedVariant(): Variant = variant.getItemAt(variant.selectedIndex)
@@ -102,7 +98,7 @@ class ContributorsUI : JFrame("GitHub Contributors") {
                 }
             }
             Variant.COROUTINE -> { // Using coroutines
-                launch(Swing) {
+                GlobalScope.launch(Dispatchers.Swing) {
                     val users = loadContributors(req)
                     updateResults(users)
                 }
@@ -115,21 +111,21 @@ class ContributorsUI : JFrame("GitHub Contributors") {
                 }
             }
             Variant.PROGRESS -> { // Using coroutines showing progress
-                launch(Swing) {
+                GlobalScope.launch(Dispatchers.Swing) {
                     loadContributorsProgress(req) { users ->
                         updateResults(users)
                     }
                 }
             }
             Variant.CANCELLABLE -> { // Using coroutines with cancellation
-                updateCancelJob(launch(Swing) {
+                updateCancelJob(GlobalScope.launch(Dispatchers.Swing) {
                     loadContributorsProgress(req) { users ->
                         updateResults(users)
                     }
                 })
             }
             Variant.CONCURRENT -> {
-                updateCancelJob(launch(Swing) {
+                updateCancelJob(GlobalScope.launch(Dispatchers.Swing) {
                     updateResults(loadContributorsConcurrent(req))
                 })
             }
@@ -143,21 +139,21 @@ class ContributorsUI : JFrame("GitHub Contributors") {
                 }
             }
             Variant.GATHER -> {
-                updateCancelJob(launch(Swing) {
+                updateCancelJob(GlobalScope.launch(Dispatchers.Swing) {
                     loadContributorsGather(req) { users ->
                         updateResults(users)
                     }
                 })
             }
             Variant.ACTOR -> {
-                updateCancelJob(launch(Swing) {
+                updateCancelJob(GlobalScope.launch(Dispatchers.Swing) {
                     loadContributorsActor(req, uiUpdateActor)
                 })
             }
         }
     }
 
-    private val uiUpdateActor = actor<List<User>>(Swing) {
+    private val uiUpdateActor = GlobalScope.actor<List<User>>(Dispatchers.Swing) {
         for (users in channel) {
             updateResults(users)
         }
@@ -174,18 +170,11 @@ class ContributorsUI : JFrame("GitHub Contributors") {
         }.toTypedArray(), COLUMNS)
     }
 
-    private fun updateAnimation() {
-        animation.value += animationDirection
-        if (animation.value >= animation.maximum || animation.value <= animation.minimum) {
-            animationDirection = -animationDirection
-        }
-    }
-
     private fun updateCancelJob(job: Job) {
         updateEnabled(false)
         val listener = ActionListener { job.cancel() }
         cancel.addActionListener(listener)
-        launch(Swing) {
+        GlobalScope.launch(Dispatchers.Swing) {
             job.join()
             updateEnabled(true)
             cancel.removeActionListener(listener)

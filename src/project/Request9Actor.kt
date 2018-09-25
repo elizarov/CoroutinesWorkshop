@@ -4,11 +4,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.coroutines.*
 
-fun aggregatorActor(
-    coroutineContext: CoroutineContext,
+fun CoroutineScope.aggregatorActor(
     uiUpdateActor: SendChannel<List<User>>
 ) =
-    actor<List<User>>(coroutineContext) {
+    actor<List<User>> {
         var contribs = emptyList<User>()
         for (users in channel) {
             contribs = (contribs + users).aggregateSlow()
@@ -22,12 +21,11 @@ class WorkerRequest(
     val repo: String
 )
 
-fun workerJob(
-    coroutineContext: CoroutineContext,
+fun CoroutineScope.workerJob(
     requests: ReceiveChannel<WorkerRequest>,
     aggregator: SendChannel<List<User>>
 ) =
-    launch(coroutineContext) {
+    launch {
         for (req in requests) {
             val users = req.service.listRepoContributors(req.org, req.repo).await()
             log.info("${req.repo}: loaded ${users.size} contributors")
@@ -35,15 +33,15 @@ fun workerJob(
         }
     }
 
-suspend fun loadContributorsActor(req: RequestData, uiUpdateActor: SendChannel<List<User>>) {
+suspend fun loadContributorsActor(req: RequestData, uiUpdateActor: SendChannel<List<User>>) = coroutineScope {
     val service = createGitHubService(req.username, req.password)
     log.info("Loading ${req.org} repos")
     val repos = service.listOrgRepos(req.org).await()
     log.info("${req.org}: loaded ${repos.size} repos")
-    val aggregator = aggregatorActor(coroutineContext, uiUpdateActor)
+    val aggregator = aggregatorActor(uiUpdateActor)
     val requests = Channel<WorkerRequest>()
     val workers = List(4) {
-        workerJob(coroutineContext, requests, aggregator)
+        workerJob(requests, aggregator)
     }
     for (repo in repos) {
         requests.send(WorkerRequest(service, req.org, repo.name))
