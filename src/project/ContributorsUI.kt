@@ -22,8 +22,8 @@ fun main(args: Array<String>) {
 enum class Variant {
     BLOCKING,    // Request1Blocking
     BACKGROUND,  // Request2Background
-    COROUTINE,   // Request3Coroutine
-    CALLBACKS,   // Request4Callbacks
+    CALLBACKS,   // Request3Callbacks
+    COROUTINE,   // Request4Coroutine
     PROGRESS,    // Request5Progress
     CANCELLABLE, // Request5Progress (too)
     CONCURRENT,  // Request6Concurrent
@@ -105,17 +105,17 @@ class ContributorsUI : JFrame("GitHub Contributors") {
                     }
                 }
             }
-            Variant.COROUTINE -> { // Using coroutines
-                GlobalScope.launch(Dispatchers.Swing) {
-                    val users = loadContributors(req)
-                    updateResults(users)
-                }
-            }
             Variant.CALLBACKS -> { // Using callbacks
                 loadContributorsCallbacks(req) { users ->
                     SwingUtilities.invokeLater {
                         updateResults(users)
                     }
+                }
+            }
+            Variant.COROUTINE -> { // Using coroutines
+                GlobalScope.launch(Dispatchers.Swing) {
+                    val users = loadContributors(req)
+                    updateResults(users)
                 }
             }
             Variant.PROGRESS -> { // Using coroutines showing progress
