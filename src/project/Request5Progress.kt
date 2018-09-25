@@ -1,6 +1,6 @@
 package project
 
-suspend fun loadContributorsProgress(req: RequestData, callback: suspend (List<User>) -> Unit) {
+suspend fun loadContributorsProgress(req: RequestData, callback: (List<User>) -> Unit) {
     val service = createGitHubService(req.username, req.password)
     log.info("Loading ${req.org} repos")
     val repos = service.listOrgRepos(req.org).await()
