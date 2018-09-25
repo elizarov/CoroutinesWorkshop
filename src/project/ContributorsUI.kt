@@ -12,8 +12,8 @@ import javax.swing.table.*
 
 fun main(args: Array<String>) {
     ContributorsUI().apply {
-        setLocationRelativeTo(null)
         pack()
+        setLocationRelativeTo(null)
         isVisible = true
     }
 }
@@ -31,7 +31,7 @@ enum class Variant {
     ACTOR        // Request9Actor
 }
 
-private val INSETS = Insets(3, 3, 3, 3)
+private val INSETS = Insets(3, 10, 3, 10)
 private val COLUMNS = arrayOf("Login", "Contributions")
 
 class ContributorsUI : JFrame("GitHub Contributors") {
@@ -44,6 +44,9 @@ class ContributorsUI : JFrame("GitHub Contributors") {
 
     private val resultsModel = DefaultTableModel(COLUMNS, 0)
     private val results = JTable(resultsModel)
+    private val resultsScroll = JScrollPane(results).apply {
+        preferredSize = Dimension(200, 200)
+    }
 
     private val icon = ImageIcon(javaClass.classLoader.getResource("ajax-loader.gif"))
     private val animation = JLabel("Event thread is active", icon, SwingConstants.CENTER)
@@ -61,7 +64,11 @@ class ContributorsUI : JFrame("GitHub Contributors") {
                 add(load)
                 add(cancel)
             })
-            addWide(JScrollPane(results))
+            addWide(resultsScroll) {
+                weightx = 1.0
+                weighty = 1.0
+                fill = GridBagConstraints.BOTH
+            }
             addWide(animation)
         }
         // Add button listener
@@ -233,6 +240,8 @@ fun JPanel.addLabeled(label: String, component: JComponent) {
         gridx = 1
         insets = INSETS
         anchor = GridBagConstraints.WEST
+        fill = GridBagConstraints.HORIZONTAL
+        weightx = 1.0
     })
 }
 

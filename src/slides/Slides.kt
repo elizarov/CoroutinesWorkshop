@@ -83,3 +83,17 @@ fun `Async vs Launch Slide`() {
     val job: Job              = launch { TODO() }
     val deferred: Deferred<T> = async  { TODO() }
 }
+
+// Launch coroutine builder slide
+
+suspend fun requestToken(): Token = TODO()
+suspend fun createPost(token: Token, item: Item): Post = TODO()
+fun processPost(post: Post): Unit = TODO()
+
+fun postItem(item: Item) {
+    GlobalScope.launch {
+        val token = requestToken()
+        val post = createPost(token, item)
+        processPost(post)
+    }
+}
