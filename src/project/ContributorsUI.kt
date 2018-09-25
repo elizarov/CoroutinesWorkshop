@@ -11,6 +11,7 @@ import javax.swing.*
 import javax.swing.table.*
 
 fun main(args: Array<String>) {
+    setDefaultFontSize(18f)
     ContributorsUI().apply {
         pack()
         setLocationRelativeTo(null)
