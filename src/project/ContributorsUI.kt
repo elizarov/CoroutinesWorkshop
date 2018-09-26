@@ -10,7 +10,7 @@ import java.util.prefs.*
 import javax.swing.*
 import javax.swing.table.*
 
-fun main(args: Array<String>) {
+fun main() {
     setDefaultFontSize(18f)
     ContributorsUI().apply {
         pack()
@@ -161,11 +161,12 @@ class ContributorsUI : JFrame("GitHub Contributors") {
         }
     }
 
-    private val uiUpdateActor = GlobalScope.actor<List<User>>(Dispatchers.Swing) {
-        for (users in channel) {
-            updateResults(users)
+    private val uiUpdateActor =
+        GlobalScope.actor<List<User>>(Dispatchers.Swing) {
+            for (users in channel) {
+                updateResults(users)
+            }
         }
-    }
 
     private fun clearResults() {
         updateResults(listOf())
