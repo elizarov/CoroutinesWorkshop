@@ -9,6 +9,7 @@ import java.util.concurrent.*
 import java.util.prefs.*
 import javax.swing.*
 import javax.swing.table.*
+import kotlin.coroutines.*
 
 fun main() {
     setDefaultFontSize(18f)
@@ -35,7 +36,8 @@ enum class Variant {
 private val INSETS = Insets(3, 10, 3, 10)
 private val COLUMNS = arrayOf("Login", "Contributions")
 
-class ContributorsUI : JFrame("GitHub Contributors") {
+@Suppress("CONFLICTING_INHERITED_JVM_DECLARATIONS")
+class ContributorsUI : JFrame("GitHub Contributors"), CoroutineScope {
     private val username = JTextField(20)
     private val password = JTextField(20)
     private val org = JTextField( 20)
@@ -51,6 +53,10 @@ class ContributorsUI : JFrame("GitHub Contributors") {
 
     private val icon = ImageIcon(javaClass.classLoader.getResource("ajax-loader.gif"))
     private val animation = JLabel("Event thread is active", icon, SwingConstants.CENTER)
+
+    private val job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Swing
 
     init {
         // Create UI
@@ -80,6 +86,7 @@ class ContributorsUI : JFrame("GitHub Contributors") {
         // Install window close listener to save preferences and exit
         addWindowListener(object : WindowAdapter() {
             override fun windowClosing(e: WindowEvent?) {
+                job.cancel()
                 savePrefs()
                 System.exit(0)
             }
@@ -113,27 +120,27 @@ class ContributorsUI : JFrame("GitHub Contributors") {
                 }
             }
             Variant.COROUTINE -> { // Using coroutines
-                GlobalScope.launch(Dispatchers.Swing) {
+                launch {
                     val users = loadContributors(req)
                     updateResults(users)
                 }
             }
             Variant.PROGRESS -> { // Using coroutines showing progress
-                GlobalScope.launch(Dispatchers.Swing) {
+                launch {
                     loadContributorsProgress(req) { users ->
                         updateResults(users)
                     }
                 }
             }
             Variant.CANCELLABLE -> { // Using coroutines with cancellation
-                updateCancelJob(GlobalScope.launch(Dispatchers.Swing) {
+                updateCancelJob(launch {
                     loadContributorsProgress(req) { users ->
                         updateResults(users)
                     }
                 })
             }
             Variant.CONCURRENT -> {
-                updateCancelJob(GlobalScope.launch(Dispatchers.Swing) {
+                updateCancelJob(launch {
                     updateResults(loadContributorsConcurrent(req))
                 })
             }
@@ -147,14 +154,14 @@ class ContributorsUI : JFrame("GitHub Contributors") {
                 }
             }
             Variant.GATHER -> {
-                updateCancelJob(GlobalScope.launch(Dispatchers.Swing) {
+                updateCancelJob(launch {
                     loadContributorsGather(req) { users ->
                         updateResults(users)
                     }
                 })
             }
             Variant.ACTOR -> {
-                updateCancelJob(GlobalScope.launch(Dispatchers.Swing) {
+                updateCancelJob(launch {
                     loadContributorsActor(req, uiUpdateActor)
                 })
             }
@@ -162,7 +169,7 @@ class ContributorsUI : JFrame("GitHub Contributors") {
     }
 
     private val uiUpdateActor =
-        GlobalScope.actor<List<User>>(Dispatchers.Swing) {
+        actor<List<User>> {
             for (users in channel) {
                 updateResults(users)
             }
@@ -183,7 +190,7 @@ class ContributorsUI : JFrame("GitHub Contributors") {
         updateEnabled(false)
         val listener = ActionListener { job.cancel() }
         cancel.addActionListener(listener)
-        GlobalScope.launch(Dispatchers.Swing) {
+        launch {
             job.join()
             updateEnabled(true)
             cancel.removeActionListener(listener)
