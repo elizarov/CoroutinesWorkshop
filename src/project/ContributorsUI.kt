@@ -3,6 +3,7 @@ package project
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.swing.*
+import project.Variant.*
 import java.awt.*
 import java.awt.event.*
 import java.util.concurrent.*
@@ -101,50 +102,50 @@ class ContributorsUI : JFrame("GitHub Contributors"), CoroutineScope {
         clearResults()
         val req = RequestData(username.text, password.text, org.text)
         when (selectedVariant()) {
-            Variant.BLOCKING -> { // Blocking UI thread
+            BLOCKING -> { // Blocking UI thread
                 val users = loadContributorsBlocking(req)
                 updateResults(users)
             }
-            Variant.BACKGROUND -> { // Blocking a background thread
+            BACKGROUND -> { // Blocking a background thread
                 loadContributorsBackground(req) { users ->
                     SwingUtilities.invokeLater {
                         updateResults(users)
                     }
                 }
             }
-            Variant.CALLBACKS -> { // Using callbacks
+            CALLBACKS -> { // Using callbacks
                 loadContributorsCallbacks(req) { users ->
                     SwingUtilities.invokeLater {
                         updateResults(users)
                     }
                 }
             }
-            Variant.COROUTINE -> { // Using coroutines
+            COROUTINE -> { // Using coroutines
                 launch {
                     val users = loadContributors(req)
                     updateResults(users)
                 }
             }
-            Variant.PROGRESS -> { // Using coroutines showing progress
+            PROGRESS -> { // Using coroutines showing progress
                 launch {
                     loadContributorsProgress(req) { users ->
                         updateResults(users)
                     }
                 }
             }
-            Variant.CANCELLABLE -> { // Using coroutines with cancellation
+            CANCELLABLE -> { // Using coroutines with cancellation
                 updateCancelJob(launch {
                     loadContributorsProgress(req) { users ->
                         updateResults(users)
                     }
                 })
             }
-            Variant.CONCURRENT -> {
+            CONCURRENT -> {
                 updateCancelJob(launch {
                     updateResults(loadContributorsConcurrent(req))
                 })
             }
-            Variant.FUTURE -> {
+            FUTURE -> {
                 val future = loadContributorsConcurrentAsync(req)
                 updateCancelFuture(future)
                 future.thenAccept { users ->
@@ -153,14 +154,14 @@ class ContributorsUI : JFrame("GitHub Contributors"), CoroutineScope {
                     }
                 }
             }
-            Variant.GATHER -> {
+            GATHER -> {
                 updateCancelJob(launch {
                     loadContributorsGather(req) { users ->
                         updateResults(users)
                     }
                 })
             }
-            Variant.ACTOR -> {
+            ACTOR -> {
                 updateCancelJob(launch {
                     loadContributorsActor(req, uiUpdateActor)
                 })
