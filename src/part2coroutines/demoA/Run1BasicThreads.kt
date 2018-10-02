@@ -1,4 +1,4 @@
-package part2blocking.demoA
+package part2coroutines.demoA
 
 import kotlin.concurrent.*
 

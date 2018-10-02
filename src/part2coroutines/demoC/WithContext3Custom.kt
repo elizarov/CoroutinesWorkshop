@@ -1,8 +1,8 @@
-package part2blocking.demoC
+package part2coroutines.demoC
 
 import kotlinx.coroutines.*
 
-private suspend fun doSomething() = withContext(Dispatchers.Default) {
+private suspend fun doSomething() = withContext(computation) {
     doSomethingSlow()
 }
 

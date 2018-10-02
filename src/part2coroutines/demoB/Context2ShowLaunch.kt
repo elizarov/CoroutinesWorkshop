@@ -1,4 +1,4 @@
-package part2blocking.demoB
+package part2coroutines.demoB
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.*

@@ -1,13 +1,13 @@
-package part2blocking.demoA
+package part2coroutines.demoA
 
 import kotlinx.coroutines.*
 
-suspend fun main() {
+fun main() {
     val jobs = List(100_000) {
         GlobalScope.launch {
-            delay(5000)
+            Thread.sleep(5000)
             print(".")
         }
     }
-    jobs.forEach { it.join() }
+    //jobs.forEach { it.join() }
 }

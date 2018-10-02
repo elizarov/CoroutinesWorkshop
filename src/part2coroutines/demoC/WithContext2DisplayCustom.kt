@@ -1,7 +1,7 @@
-package part2blocking.demoC
+package part2coroutines.demoC
 
 import kotlinx.coroutines.*
-import part2blocking.demoB.*
+import part2coroutines.demoB.*
 
 val computation =
     newFixedThreadPoolContext(2, "Computation")

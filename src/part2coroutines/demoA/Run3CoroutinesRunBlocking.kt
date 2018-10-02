@@ -1,11 +1,11 @@
-package part2blocking.demoA
+package part2coroutines.demoA
 
 import kotlinx.coroutines.*
 
 fun main() = runBlocking<Unit> {
     val jobs = List(100_000) {
         GlobalScope.launch {
-            delay(5000)
+            Thread.sleep(5000)
             print(".")
         }
     }

@@ -1,4 +1,4 @@
-package part2blocking.demoC
+package part2coroutines.demoC
 
 import kotlinx.coroutines.*
 
@@ -6,7 +6,7 @@ fun main() = runBlocking<Unit> {
     val job = launch {
         repeat(1000) { i ->
             println("I'm sleeping $i ...")
-            Thread.sleep(500)
+            delay(500)
         }
     }
     delay(1300) // delay a bit

@@ -1,9 +1,11 @@
-package part2blocking.demoC
+package part2coroutines.demoC
 
 import kotlinx.coroutines.*
 
 fun main() = runBlocking<Unit> {
-    withTimeout(1300) {
+    println(coroutineContext[Job])
+    withTimeoutOrNull(1300) {
+        println(coroutineContext[Job])
         repeat(1000) { i ->
             println("I'm sleeping $i ...")
             delay(500)
