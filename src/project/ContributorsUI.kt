@@ -134,16 +134,16 @@ class ContributorsUI : JFrame("GitHub Contributors"), CoroutineScope {
                 }
             }
             CANCELLABLE -> { // Using coroutines with cancellation
-                updateCancelJob(launch {
+                launch {
                     loadContributorsProgress(req) { users ->
                         updateResults(users)
                     }
-                })
+                }.updateCancelJob()
             }
             CONCURRENT -> {
-                updateCancelJob(launch {
+                launch {
                     updateResults(loadContributorsConcurrent(req))
-                })
+                }.updateCancelJob()
             }
             FUTURE -> {
                 val future = loadContributorsConcurrentAsync(req)
@@ -155,16 +155,16 @@ class ContributorsUI : JFrame("GitHub Contributors"), CoroutineScope {
                 }
             }
             GATHER -> {
-                updateCancelJob(launch {
+                launch {
                     loadContributorsGather(req) { users ->
                         updateResults(users)
                     }
-                })
+                }.updateCancelJob()
             }
             ACTOR -> {
-                updateCancelJob(launch {
+                launch {
                     loadContributorsActor(req, uiUpdateActor)
-                })
+                }.updateCancelJob()
             }
         }
     }
@@ -187,12 +187,12 @@ class ContributorsUI : JFrame("GitHub Contributors"), CoroutineScope {
         }.toTypedArray(), COLUMNS)
     }
 
-    private fun updateCancelJob(job: Job) {
+    private fun Job.updateCancelJob() {
         updateEnabled(false)
-        val listener = ActionListener { job.cancel() }
+        val listener = ActionListener { cancel() }
         cancel.addActionListener(listener)
         launch {
-            job.join()
+            join()
             updateEnabled(true)
             cancel.removeActionListener(listener)
         }
