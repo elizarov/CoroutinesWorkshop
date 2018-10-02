@@ -78,7 +78,7 @@ fun `Real Life Slide`() {
     }
 }
 
-fun `Async vs Launch Slide`() {
+suspend fun `Async vs Launch Slide`() = coroutineScope {
     class T
     val job: Job              = launch { TODO() }
     val deferred: Deferred<T> = async  { TODO() }
@@ -97,3 +97,5 @@ fun postItem(item: Item) {
         processPost(post)
     }
 }
+
+class Image

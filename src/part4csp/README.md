@@ -1,1 +1,1 @@
-# Part 4. CSP with Channels and Actors
+# Part 4. CSP and Channels
