@@ -11,7 +11,6 @@ class Counter {
         counter++
     }
 
-
     suspend fun get() = mutex.withLock {
         counter
     }
