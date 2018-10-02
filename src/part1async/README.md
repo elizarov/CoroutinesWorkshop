@@ -1,1 +1,1 @@
-# Part 1. Asynchronous Programming and Introduction to Coroutines
+# Part 1. Asynchronous Programming

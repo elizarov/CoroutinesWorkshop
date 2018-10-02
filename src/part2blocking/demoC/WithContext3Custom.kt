@@ -2,7 +2,7 @@ package part2blocking.demoC
 
 import kotlinx.coroutines.*
 
-suspend fun doSomething() = withContext(computation) {
+private suspend fun doSomething() = withContext(computation) {
     doSomethingSlow()
 }
 
