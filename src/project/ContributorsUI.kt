@@ -2,6 +2,7 @@ package project
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.debug.*
 import kotlinx.coroutines.swing.*
 import project.Variant.*
 import java.awt.*
@@ -12,7 +13,9 @@ import javax.swing.*
 import javax.swing.table.*
 import kotlin.coroutines.*
 
+@ExperimentalCoroutinesApi
 fun main() {
+    DebugProbes.install()
     setDefaultFontSize(18f)
     ContributorsUI().apply {
         pack()
