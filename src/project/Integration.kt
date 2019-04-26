@@ -4,13 +4,16 @@ import kotlinx.coroutines.*
 import retrofit2.*
 import kotlin.coroutines.*
 
-suspend fun <T> Call<T>.await(): T = suspendCancellableCoroutine { cont ->
+@Suppress("UNCHECKED_CAST")
+suspend fun <T> Call<T>.await(
+    noContent: (Response<T>) -> T = { errorResponse(it) }
+): T = suspendCancellableCoroutine { cont ->
     enqueue(object : Callback<T> {
         override fun onResponse(call: Call<T>, response: Response<T>) {
-            if (response.isSuccessful) {
-                cont.resume(response.body()!!)
-            } else {
-                cont.resumeWithException(ErrorResponse(response))
+            when (response.code()) {
+                200 -> cont.resume(response.body() as T) // OK
+                204 -> cont.resumeWith(runCatching { noContent(response) }) // NO CONTENT
+                else -> cont.resumeWithException(ErrorResponse(response))
             }
         }
 
@@ -23,6 +26,6 @@ suspend fun <T> Call<T>.await(): T = suspendCancellableCoroutine { cont ->
     }
 }
 
-class ErrorResponse(response: Response<*>) : Exception(
-    "Failed with ${response.code()}: ${response.message()}\n${response.errorBody()?.string()}"
-)
+suspend fun <T> Call<List<T>>.await(): List<T> =
+    await(noContent = { emptyList() })
+

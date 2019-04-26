@@ -2,7 +2,7 @@ package project
 
 import retrofit2.*
 
-fun loadContributorsBlocking(req: RequestData) : List<User> {
+fun loadContributorsBlocking(req: RequestData): List<User> {
     val service = createGitHubService(req.username, req.password)
     log.info("Loading ${req.org} repos")
     val repos = service.listOrgRepos(req.org).responseBodyBlocking()
@@ -16,14 +16,17 @@ fun loadContributorsBlocking(req: RequestData) : List<User> {
     return contribs
 }
 
-fun <T> Call<T>.responseBodyBlocking(): T {
+@Suppress("UNCHECKED_CAST")
+fun <T> Call<T>.responseBodyBlocking(
+    noContent: (Response<T>) -> T
+): T {
     val response = execute() // Executes requests and blocks current thread
-    checkResponse(response)
-    return response.body()!!
-}
-
-fun checkResponse(response: Response<*>) {
-    check(response.isSuccessful) {
-        "Failed with ${response.code()}: ${response.message()}\n${response.errorBody()?.string()}"
+    return when (response.code()) {
+        200 -> response.body() as T // OK
+        204 -> noContent(response) // NO CONTENT
+        else -> errorResponse(response)
     }
 }
+
+fun <T> Call<List<T>>.responseBodyBlocking(): List<T> =
+    responseBodyBlocking(noContent = { emptyList() })

@@ -29,11 +29,18 @@ fun loadContributorsCallbacks(req: RequestData, callback: (List<User>) -> Unit) 
     }
 }
 
-inline fun <T> Call<T>.responseCallback(crossinline callback: (T) -> Unit) {
+@Suppress("UNCHECKED_CAST")
+fun <T> Call<T>.responseCallback(
+    callback: (T) -> Unit,
+    noContent: (Response<T>) -> T = { errorResponse(it) }
+) {
     enqueue(object : Callback<T> {
         override fun onResponse(call: Call<T>, response: Response<T>) {
-            checkResponse(response)
-            callback(response.body()!!)
+            when (response.code()) {
+                200 -> callback(response.body() as T) // OK
+                204 -> callback(noContent(response)) // NO CONTENT
+                else -> errorResponse(response)
+            }
         }
 
         override fun onFailure(call: Call<T>, t: Throwable) {
@@ -41,3 +48,8 @@ inline fun <T> Call<T>.responseCallback(crossinline callback: (T) -> Unit) {
         }
     })
 }
+
+fun <T> Call<List<T>>.responseCallback(
+    callback: (List<T>) -> Unit
+) =
+    responseCallback(callback, noContent = { emptyList() })
